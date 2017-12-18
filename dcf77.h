@@ -13,7 +13,7 @@
 #define DCF77_BIT_IDLE_MAX    (1000 - (DCF77_BIT_LOW_MIN))
 
 /* start of minute */
-#define DCF77_SIG_START_MIN   1800
+#define DCF77_SIG_START_MIN   1600
 #define DCF77_SIG_START_MAX   2200
 
 /* DFC77 input debounce time */

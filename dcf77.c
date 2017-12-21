@@ -33,6 +33,9 @@
  *
  *   $Log: /pic/_drv/dcf77.h $
  * 
+ * 13    21.12.17 22:20 loadletter
+ * - add sanity checks to dcf77_newdata()
+ * 
  * 12    8.12.17 19:00 loadletter
  * - split into .c/.h
  * - make get functions return decimal instead of weird BCD integers
@@ -272,8 +275,13 @@ uint8 dcf77_newdata(void)
 		/* check for valid minute */
 		data1 = ((dcf77_data_au8[2] & 0xE0) >> 5);
 		data2 = ((dcf77_data_au8[3] & 0x0F) << 3);
-		parity = calc_parity(data1 | data2);
+		data = data1 | data2;
+		parity = calc_parity(data);
 		valid = check_parity(parity, bit_test(dcf77_data_au8[3], 4));
+		if (data > 0x59)
+		{
+			valid = FALSE;
+		}	
 		if (!valid)
 		{
 			goto invalidparity;
@@ -282,8 +290,13 @@ uint8 dcf77_newdata(void)
 		/* check for valid hour */
 		data1 = ((dcf77_data_au8[3] & 0xE0) >> 5);
 		data2 = ((dcf77_data_au8[4] & 0x07) << 3);
-		parity = calc_parity(data1 | data2);
+		data = data1 | data2;
+		parity = calc_parity(data);
 		valid = check_parity(parity, bit_test(dcf77_data_au8[4], 3));
+		if (data > 0x23)
+		{
+			valid = FALSE;
+		}	
 		if (!valid)
 		{
 			goto invalidparity;
@@ -294,14 +307,31 @@ uint8 dcf77_newdata(void)
 		//day
 		data1 = ((dcf77_data_au8[4] & 0xF0) >> 4);
 		data2 = ((dcf77_data_au8[5] & 0x03) << 4);
-		parity = calc_parity_part(data1 | data2, parity);
+		data = data1 | data2;
+		if (data > 0x31)
+		{
+			valid = FALSE;
+			goto invalidparity;
+		}
+		parity = calc_parity_part(data, parity);
 		//dow
 		data = dcf77_get_dow();
+		if (data > 0x7)
+		{
+			valid = FALSE;
+			goto invalidparity;
+		}
 		parity = calc_parity_part(data, parity);
 		//month
 		data1 = ((dcf77_data_au8[5] & 0xE0) >> 5);
    		data2 = ((dcf77_data_au8[6] & 0x03) << 3);
-		parity = calc_parity_part(data1 | data2, parity);
+		data = data1 | data2;
+		if (data > 0x12)
+		{
+			valid = FALSE;
+			goto invalidparity;
+		}
+		parity = calc_parity_part(data, parity);
 		//year
 		data1 = ((dcf77_data_au8[6] & 0xFC) >> 2);
 		data2 = ((dcf77_data_au8[7] & 0x03) << 6);

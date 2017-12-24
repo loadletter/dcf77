@@ -264,6 +264,8 @@ uint8 dcf77_newdata(void)
 	
 	uint8 data1;
 	uint8 data2;
+	
+	uint8 month, day;
 
 	/* if sync is OK and */
 	/* start of new minute is 0 (start of minute is always 1) */
@@ -308,15 +310,16 @@ uint8 dcf77_newdata(void)
 		data1 = ((dcf77_data_au8[4] & 0xF0) >> 4);
 		data2 = ((dcf77_data_au8[5] & 0x03) << 4);
 		data = data1 | data2;
-		if (data > 0x31)
+		if (data == 0 || data > 0x31)
 		{
 			valid = FALSE;
 			goto invalidparity;
 		}
 		parity = calc_parity_part(data, parity);
+		day = bcd_to_dec(data);
 		//dow
 		data = dcf77_get_dow();
-		if (data > 0x7)
+		if (data == 0 || data > 0x7)
 		{
 			valid = FALSE;
 			goto invalidparity;
@@ -326,12 +329,19 @@ uint8 dcf77_newdata(void)
 		data1 = ((dcf77_data_au8[5] & 0xE0) >> 5);
    		data2 = ((dcf77_data_au8[6] & 0x03) << 3);
 		data = data1 | data2;
-		if (data > 0x12)
+		if (data == 0 || data > 0x12)
 		{
 			valid = FALSE;
 			goto invalidparity;
 		}
 		parity = calc_parity_part(data, parity);
+		month = bcd_to_dec(data);
+		//check days of shorter months
+		if ((month == 2 && day > 29) || (day > 30 && (month == 4 || month == 6 || month == 9 || month == 11)))
+		{
+			valid = FALSE;
+			goto invalidparity;
+		}
 		//year
 		data1 = ((dcf77_data_au8[6] & 0xFC) >> 2);
 		data2 = ((dcf77_data_au8[7] & 0x03) << 6);
